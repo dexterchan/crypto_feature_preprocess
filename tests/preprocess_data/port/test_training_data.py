@@ -24,7 +24,7 @@ def test_prepare_training_data_and_eval_from_parquet() -> None:
     split_ratio = 0.8
 
     # output_folder should be data/training/YYYYMMDD
-    output_folder = f"${test_output_dir}/training/{test_exchange}/{test_symbol}/{datetime.now().strftime('%Y%m%d')}"
+    output_folder = f"{test_output_dir}/training/{test_exchange}/{test_symbol}/{datetime.now().strftime('%Y%m%d')}"
 
     prepare_training_data_and_eval_from_parquet(
         exchange=test_exchange,
