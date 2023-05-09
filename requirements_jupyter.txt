@@ -1,0 +1,16 @@
+#jupyter
+#jupyter-client
+#jupyter-console
+#jupyter-core
+
+#jupyterlab
+
+ipython
+jupyterlab=3
+nb_conda_kernels 
+black 
+isort
+jupyterlab_code_formatter
+ipywidgets 
+plotly==5.5.0
+matplotlib
