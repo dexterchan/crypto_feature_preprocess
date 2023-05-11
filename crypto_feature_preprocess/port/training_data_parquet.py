@@ -62,6 +62,7 @@ def prepare_training_data_and_eval_from_parquet(
         ) as data_storage:
             for i, time_ranges in enumerate(time_ranges):
                 # convert _start_date and _end_date to int in ms
+                # logger.debug(f"Processing {i} data: {time_ranges}")
                 _start_date, _end_date = time_ranges
                 _start_date_ms = int(_start_date.timestamp() * 1000)
                 _end_date_ms = int(_end_date.timestamp() * 1000)
@@ -71,6 +72,7 @@ def prepare_training_data_and_eval_from_parquet(
                     from_time=_start_date_ms,
                     to_time=_end_date_ms,
                 )
+                # logger.debug("read Candles: %s", len(candles))
 
                 # Resample training candles
                 candles_sampled: pd.DataFrame = resample_timeframe(
@@ -85,6 +87,7 @@ def prepare_training_data_and_eval_from_parquet(
                 candles_sampled["scenario"] = i
 
                 # Save training candles
+                # logger.debug("write Candles: %s", len(candles_sampled))
                 data_storage.save_data(candles_sampled)
             logger.info(f"Written {data_type} data: {data_storage.written_rows}")
         pass

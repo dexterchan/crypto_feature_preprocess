@@ -18,9 +18,10 @@ test_output_dir = os.environ.get("OUTPUT_DIR", "data/output")
 
 
 def test_prepare_training_data_and_eval_from_parquet() -> None:
+    data_length_days = 3
     start_date = datetime(2020, 1, 1)
-    end_date = start_date + timedelta(days=7 * 200)
-    data_length = timedelta(days=7)
+    end_date = start_date + timedelta(days=365 * 3)
+    data_length = timedelta(days=data_length_days)
     split_ratio = 0.8
 
     # output_folder should be data/training/YYYYMMDD
@@ -37,5 +38,5 @@ def test_prepare_training_data_and_eval_from_parquet() -> None:
         split_ratio=split_ratio,
         output_folder=output_folder,
         candle_size="15Min",
-        min_candle_population=int(4 * 24 * 7 * 0.8),
+        min_candle_population=int(4 * 24 * data_length_days * 0.8),
     )

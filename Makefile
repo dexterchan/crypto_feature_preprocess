@@ -90,3 +90,7 @@ setup_env:
 	mamba install -c conda-forge -y --file requirements.txt
 	mamba install -c conda-forge -y --file requirements_jupyter.txt
 	mamba install -c conda-forge -y --file requirements_dev.txt
+
+test:
+	export DATA_DIR=crypto_market_data/data
+	pytest tests

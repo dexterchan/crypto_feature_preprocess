@@ -30,6 +30,7 @@ def splitting_training_and_eval_time_range(
     """
     # Calculate the number of days
     num_of_data_vector = int((end_date - start_date) / data_length)
+    logger.info(f"num_of_data_vector: {num_of_data_vector}")
     # Calculate the number of training days
     num_training_vector = int(num_of_data_vector * split_ratio)
     # Calculate the number of eval days
