@@ -17,12 +17,13 @@ def prepare_training_data_and_eval_from_parquet(
     start_date: datetime,
     end_date: datetime,
     data_length: timedelta,
+    data_step: timedelta,
     split_ratio: float,
     output_folder: str,
     candle_size: str,
     min_candle_population: int,
     data_type: str = "PARQUET",
-) -> tuple[str, str]:
+) -> tuple[int, int]:
     """Prepare training data and eval data from parquet file
 
 
@@ -34,11 +35,15 @@ def prepare_training_data_and_eval_from_parquet(
         start_date (datetime): start date
         end_date (datetime): end date
         data_length (timedelta): data length
+        data_step (timedelta): data step
         split_ratio (float): split ratio
         output_folder (str): output folder
         candle_size (str): candle size e.g. 15Min, 1H, D
         min_candle_population (int): min candle population
         data_type (Database_Type): data type
+
+    Returns:
+        tuple[int, int]: written training data(num of rows) and eval data(num of rows)
     """
 
     db_client = get_data_db_client(
@@ -52,9 +57,10 @@ def prepare_training_data_and_eval_from_parquet(
         end_date=end_date,
         data_length=data_length,
         split_ratio=split_ratio,
+        data_step=data_step,
     )
 
-    def _save_data_to_storage(data_type: str, time_ranges: list[tuple]) -> None:
+    def _save_data_to_storage(data_type: str, time_ranges: list[tuple]) -> int:
         with TrainingDataStorage(
             output_folder=os.path.join(output_folder, data_type),
             buffer_size=10000,
@@ -89,10 +95,16 @@ def prepare_training_data_and_eval_from_parquet(
                 # Save training candles
                 # logger.debug("write Candles: %s", len(candles_sampled))
                 data_storage.save_data(candles_sampled)
+            data_storage.flush()
             logger.info(f"Written {data_type} data: {data_storage.written_rows}")
+            return data_storage.written_rows
         pass
 
-    _save_data_to_storage(data_type="training", time_ranges=training_time_range)
-    _save_data_to_storage(data_type="eval", time_ranges=eval_time_range)
+    num_training_rows_written = _save_data_to_storage(
+        data_type="training", time_ranges=training_time_range
+    )
+    num_eval_rows_written = _save_data_to_storage(
+        data_type="eval", time_ranges=eval_time_range
+    )
 
-    pass
+    return num_training_rows_written, num_eval_rows_written

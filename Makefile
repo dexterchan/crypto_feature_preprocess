@@ -92,5 +92,18 @@ setup_env:
 	mamba install -c conda-forge -y --file requirements_dev.txt
 
 test:
-	export DATA_DIR=crypto_market_data/data
+	export DATA_DIR=$(pwd)/../crypto_market_data/data
 	pytest tests
+
+build_conda:
+	sh conda/build_conda.sh
+
+
+bump_version_patch:
+	bump2version patch --allow-dirty
+
+bump_version_minor:
+	bump2version minor --allow-dirty 
+
+bump_version_major:
+	bump2version major --allow-dirty 

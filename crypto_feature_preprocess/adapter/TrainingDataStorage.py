@@ -57,7 +57,7 @@ class TrainingDataStorage(ContextDecorator):
         return self
 
     def __exit__(self, *exc):
-        self.save_remaining_data()
+        self.flush()
         logger.info(
             f"Training data storage closed in {self.output_folder}, total written: {self.written_rows}"
         )
@@ -66,3 +66,7 @@ class TrainingDataStorage(ContextDecorator):
     @property
     def written_rows(self) -> int:
         return self._written_rows
+
+    def flush(self) -> None:
+        self.save_remaining_data()
+        pass
