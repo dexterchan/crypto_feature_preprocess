@@ -22,6 +22,7 @@ def test_prepare_training_data_and_eval_from_parquet() -> None:
     data_step_days = 1
     time_windows_days = 30
     start_date = datetime(2020, 1, 1)
+    candle_size_min: int = 15
 
     end_date = start_date + timedelta(days=time_windows_days)
     data_step: timedelta = timedelta(days=data_step_days)
@@ -38,6 +39,9 @@ def test_prepare_training_data_and_eval_from_parquet() -> None:
     # output_folder should be data/training/YYYYMMDD
     output_folder = f"{test_output_dir}/training/{test_exchange}/{test_symbol}/{datetime.now().strftime('%Y%m%d')}"
 
+    min_candle_population: int = int(
+        timedelta(days=1) / timedelta(minutes=candle_size_min) * data_length_days * 0.8
+    )
     (
         num_training_data_row,
         num_eval_data_row,
@@ -52,8 +56,8 @@ def test_prepare_training_data_and_eval_from_parquet() -> None:
         data_step=data_step,
         split_ratio=split_ratio,
         output_folder=output_folder,
-        candle_size="15Min",
-        min_candle_population=int(4 * 24 * data_length_days * 0.8),
+        candle_size=f"{candle_size_min}Min",
+        min_candle_population=min_candle_population,
     )
     assert num_training_data_row >= min_num_training_data_row
     assert num_eval_data_row >= min_num_eval_data_row
