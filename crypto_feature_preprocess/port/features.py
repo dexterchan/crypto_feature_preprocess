@@ -34,7 +34,7 @@ def _initialize_price_feature_instance(nt: NamedTuple, price: pd.Series) -> Feat
 
 def create_feature_from_close_price(
     ohlcv_candles: pd.DataFrame, feature_pools: list[Feature_Definition]
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.array]:
     """Create feature vectors from close price
 
     Args:
@@ -42,7 +42,8 @@ def create_feature_from_close_price(
         feature_pools (list[Feature_Definition]): feature to aggregrate
 
     Returns:
-        np.ndarray: array of features
+        tuple[] : [N X (accm of feature dimension)] matrix of features, feature breakdown in array
+
     """
 
     close_price = ohlcv_candles["close"]
@@ -62,4 +63,11 @@ def create_feature_from_close_price(
     ]
     # Concatenate all features
     feature_set = np.concatenate(feature_set, axis=1)
-    return feature_set
+
+    features_spec_output_list: list[int] = [
+        f_def.data.dimension for f_def in feature_pools
+    ]
+    accm = np.array(features_spec_output_list)
+    feature_breakdown = np.add.accumulate(accm)
+
+    return feature_set, feature_breakdown

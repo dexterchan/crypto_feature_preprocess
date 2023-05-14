@@ -74,7 +74,7 @@ def test_feature_preparation(
     logger.debug(f"SMA cross feature size: {num_sma_cross_feature}")
     logger.debug(f"Expected feature size: {expected_feature_size}")
 
-    feature_array = create_feature_from_close_price(
+    feature_array, feature_breakdown = create_feature_from_close_price(
         ohlcv_candles=candles, feature_pools=spec_list
     )
     # Check feature array here
@@ -86,13 +86,18 @@ def test_feature_preparation(
     expected_log_price_feature_array = log_price_feature_array[-expected_feature_size:]
     expected_rsi_feature_array = rsi_feature_array[-expected_feature_size:]
     expected_sma_cross_feature_array = sma_cross_feature_array[-expected_feature_size:]
-    # assert (
-    #     expected_log_price_feature_array == feature_array[:, : look_back_list[0]]
-    # ).all()
+    # Log Price feature, the difference between expected_log_price_feawture_array and feautre_array
     assert (
         np.abs(expected_log_price_feature_array - feature_array[:, : look_back_list[0]])
         < 0.1
     ).all()
+    assert (
+        np.abs(
+            expected_log_price_feature_array - feature_array[:, : feature_breakdown[0]]
+        )
+        < 0.1
+    ).all()
+
     # Check RSI feature, the difference between expected_rsi_feature_array and feature_array[:, look_back_list[0] : look_back_list[0] + look_back_list[1]]  is less than 0.1
     assert (
         np.abs(
@@ -103,11 +108,18 @@ def test_feature_preparation(
         )
         < 0.1
     ).all()
+    assert look_back_list[0] == feature_breakdown[0]
+    assert look_back_list[1] + look_back_list[0] == feature_breakdown[1]
 
-    # assert (
-    #     expected_rsi_feature_array
-    #     == feature_array[:, look_back_list[0] : look_back_list[0] + look_back_list[1]]
-    # ).all()
+    assert (
+        np.abs(
+            expected_rsi_feature_array
+            - feature_array[:, feature_breakdown[0] : feature_breakdown[1]]
+        )
+        < 0.1
+    ).all()
+
+    # check SMA Cross
     assert (
         np.abs(
             expected_sma_cross_feature_array
@@ -115,8 +127,10 @@ def test_feature_preparation(
         )
         < 0.1
     ).all()
-    # assert (
-    #     expected_sma_cross_feature_array
-    #     == feature_array[:, look_back_list[0] + look_back_list[1] :]
-    # ).all()
+    assert (
+        np.abs(
+            expected_sma_cross_feature_array - feature_array[:, feature_breakdown[1] :]
+        )
+        < 0.1
+    ).all()
     pass
