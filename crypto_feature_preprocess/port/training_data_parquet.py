@@ -6,6 +6,7 @@ import pandas as pd
 from ..adapter.TrainingDataStorage import TrainingDataStorage
 import os
 from ..logging import get_logger
+from .interfaces import Training_Eval_Enum
 
 logger = get_logger(__name__)
 
@@ -101,10 +102,10 @@ def prepare_training_data_and_eval_from_parquet(
         pass
 
     num_training_rows_written = _save_data_to_storage(
-        data_type="training", time_ranges=training_time_range
+        data_type=Training_Eval_Enum.TRAINING, time_ranges=training_time_range
     )
     num_eval_rows_written = _save_data_to_storage(
-        data_type="eval", time_ranges=eval_time_range
+        data_type=Training_Eval_Enum.EVAL, time_ranges=eval_time_range
     )
 
     return num_training_rows_written, num_eval_rows_written

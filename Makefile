@@ -91,8 +91,8 @@ setup_env:
 	mamba install -c conda-forge -y --file requirements_jupyter.txt
 	mamba install -c conda-forge -y --file requirements_dev.txt
 
+test: export DATA_DIR=$(shell pwd)/../crypto_market_data/data
 test:
-	export DATA_DIR=$(pwd)/../crypto_market_data/data
 	pytest tests
 
 build_conda:
@@ -108,7 +108,7 @@ bump_version_minor:
 bump_version_major:
 	bump2version major --allow-dirty 
 
+exec_cmd: export DATA_DIR=$(shell pwd)/../crypto_market_data/data
 exec_cmd:
-	export DATA_DIR=$(pwd)/../crypto_market_data/data
 	python3 -m crypto_feature_preprocess --exchange kraken --symbol ETHUSD --input_data_dir=${DATA_DIR} --output_data_dir=/tmp/output \
 	--start_date 20200101  --time_windows 1095 --data_length 3 --data_step 1 --split_ratio 0.8 --candle_size 15

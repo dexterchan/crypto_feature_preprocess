@@ -22,4 +22,5 @@ twine
 pytest
 
 ta-lib
+anaconda-client
 
