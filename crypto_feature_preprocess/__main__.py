@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from crypto_feature_preprocess.logging import get_logger
 from crypto_feature_preprocess.port.training_data_parquet import (
     prepare_training_data_and_eval_from_parquet,
+    derive_min_candle_population_in_episode,
 )
 from datetime import datetime, timedelta
 
@@ -112,12 +113,12 @@ if __name__ == "__main__":
     # calculate the end date
     end_date: datetime = start_date + timedelta(days=time_windows)
 
-    min_candle_population: int = int(
-        timedelta(days=1)
-        / timedelta(minutes=candle_size_minutes)
-        * data_length_days
-        * 0.8
+    min_candle_population: int = derive_min_candle_population_in_episode(
+        candle_size_minutes=candle_size_minutes,
+        data_length_days=data_length_days,
+        data_presence_ratio=0.8,
     )
+
     # Generate training and evaluation data
     (
         num_training_data_row,

@@ -3,6 +3,7 @@ from __future__ import annotations
 from crypto_feature_preprocess.logging import get_logger
 from crypto_feature_preprocess.port.training_data_parquet import (
     prepare_training_data_and_eval_from_parquet,
+    derive_min_candle_population_in_episode,
 )
 from datetime import datetime, timedelta
 
@@ -39,8 +40,10 @@ def test_prepare_training_data_and_eval_from_parquet() -> None:
     # output_folder should be data/training/YYYYMMDD
     output_folder = f"{test_output_dir}/training/{test_exchange}/{test_symbol}/{datetime.now().strftime('%Y%m%d')}"
 
-    min_candle_population: int = int(
-        timedelta(days=1) / timedelta(minutes=candle_size_min) * data_length_days * 0.8
+    min_candle_population: int = derive_min_candle_population_in_episode(
+        candle_size_minutes=candle_size_min,
+        data_length_days=data_length_days,
+        data_presence_ratio=0.8,
     )
     (
         num_training_data_row,

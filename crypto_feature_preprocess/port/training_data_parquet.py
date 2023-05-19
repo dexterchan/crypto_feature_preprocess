@@ -11,6 +11,18 @@ from .interfaces import Training_Eval_Enum
 logger = get_logger(__name__)
 
 
+def derive_min_candle_population_in_episode(
+    candle_size_minutes: int, data_length_days: int, data_presence_ratio: float = 0.8
+) -> int:
+    min_candle_population: int = int(
+        timedelta(days=1)
+        / timedelta(minutes=candle_size_minutes)
+        * data_length_days
+        * data_presence_ratio
+    )
+    return min_candle_population
+
+
 def prepare_training_data_and_eval_from_parquet(
     exchange: str,
     symbol: str,
