@@ -38,7 +38,16 @@ def prepare_training_data_and_eval_from_parquet(
     data_type: str = "PARQUET",
 ) -> tuple[int, int]:
     """Prepare training data and eval data from parquet file
-
+       It outputs OHLVC data in parquet file format with schema:
+        open: double
+        high: double
+        low: double
+        close: double
+        volume: double
+        scenario: int64
+        __index_level_0__: timestamp[us]
+        -- schema metadata --
+        pandas: '{"index_columns": ["__index_level_0__"], "column_indexes": [{"na' + 1003
 
     Args:
 
