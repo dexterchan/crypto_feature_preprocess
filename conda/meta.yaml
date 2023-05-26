@@ -1,6 +1,6 @@
 package:
   name: "crypto_feature_preprocess"
-  version: '0.1.4'
+  version: '0.2.0'
 about:
   summary: "This is crypto preprocess feature Python library"
 source:
