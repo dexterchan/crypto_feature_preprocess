@@ -117,7 +117,11 @@ def test_teature_preparation_v2(
     assert (
         feature_output.time_index == one_vector_data.index[-expected_feature_size:]
     ).all()
-
+    # Check price with timeindex
+    assert (
+        one_vector_data[one_vector_data.index == feature_output.time_index[0]]
+        == one_vector_data[-expected_feature_size : -expected_feature_size + 1]
+    ).all()
     pass
 
 
