@@ -5,10 +5,12 @@ from crypto_feature_preprocess.port.interfaces import (
     Log_Price_Feature_Interface,
     SMA_Cross_Feature_Interface,
     Feature_Enum,
+    Feature_Output,
 )
 import numpy as np
 from crypto_feature_preprocess.port.features import (
     create_feature_from_one_dim_data,
+    create_feature_from_one_dim_data_v2,
     _initialize_price_feature_instance,
 )
 import pytest
@@ -39,6 +41,84 @@ def get_feature_spec() -> list[Feature_Definition]:
         ),
     ]
     return feature_definitions
+
+
+def test_teature_preparation_v2(
+    get_test_decending_then_ascending_mkt_data, get_feature_spec
+) -> None:
+    candles = get_test_decending_then_ascending_mkt_data(dim=100)
+    feature_schema_list = get_feature_spec
+
+    one_vector_data = candles["close"]
+    rsi_feature = _initialize_price_feature_instance(
+        nt=feature_schema_list[1].data, price=one_vector_data
+    )
+    log_price_feature = _initialize_price_feature_instance(
+        nt=feature_schema_list[0].data, price=one_vector_data
+    )
+    sma_cross_feature = _initialize_price_feature_instance(
+        nt=feature_schema_list[2].data, price=one_vector_data
+    )
+    # Create reference feature for comparison
+    rsi_feature_array = rsi_feature.output_feature_array(normalize=True)
+    num_rsi_feature, rsi_dim = rsi_feature_array.shape
+
+    log_price_feature_array = log_price_feature.output_feature_array(normalize=True)
+    num_log_price_feature, log_dim = log_price_feature_array.shape
+
+    sma_cross_feature_array = sma_cross_feature.output_feature_array(normalize=True)
+    num_sma_cross_feature, sma_dim = sma_cross_feature_array.shape
+
+    expected_feature_size: int = min(
+        num_rsi_feature, num_log_price_feature, num_sma_cross_feature
+    )
+    expected_log_price_feature_array = log_price_feature_array[-expected_feature_size:]
+    expected_rsi_feature_array = rsi_feature_array[-expected_feature_size:]
+    expected_sma_cross_feature_array = sma_cross_feature_array[-expected_feature_size:]
+
+    # Test our feature generation function
+    feature_output: Feature_Output = create_feature_from_one_dim_data_v2(
+        feature_schema_list=feature_schema_list,
+        data_vector=one_vector_data,
+    )
+
+    assert feature_output.feature_data.shape == (
+        expected_feature_size,
+        rsi_dim + log_dim + sma_dim,
+    ), "Feature dimension is not correct"
+
+    # Check feature array here
+    # Log Price feature, the difference between expected_log_price_feawture_array and feautre_array
+    assert (
+        np.abs(
+            feature_output.feature_data[:, :log_dim] - expected_log_price_feature_array
+        )
+        < 0.1
+    ).all()
+    # RSI feature
+    assert (
+        np.abs(
+            feature_output.feature_data[:, log_dim : log_dim + rsi_dim]
+            - expected_rsi_feature_array
+        )
+        < 0.1
+    ).all()
+    # SMA feature
+    assert (
+        np.abs(
+            feature_output.feature_data[:, log_dim + rsi_dim :]
+            - expected_sma_cross_feature_array
+        )
+        < 0.1
+    ).all()
+    # Check meta data
+    assert feature_output.metadata == feature_schema_list
+    # Check timeindex
+    assert (
+        feature_output.time_index == one_vector_data.index[-expected_feature_size:]
+    ).all()
+
+    pass
 
 
 def test_feature_preparation(
@@ -75,7 +155,7 @@ def test_feature_preparation(
     logger.debug(f"Expected feature size: {expected_feature_size}")
 
     feature_array, feature_breakdown = create_feature_from_one_dim_data(
-        price_vector=candles["close"], feature_pools=spec_list
+        price_vector=candles["close"], feature_list=spec_list
     )
     # Check feature array here
     num_features, dim = feature_array.shape
