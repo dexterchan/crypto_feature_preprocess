@@ -32,13 +32,13 @@ def _initialize_price_feature_instance(nt: NamedTuple, price: pd.Series) -> Feat
         raise NotImplementedError(f"Not supporting this config: {nt}")
 
 
-def create_feature_from_close_price(
-    ohlcv_candles: pd.DataFrame, feature_pools: list[Feature_Definition]
+def create_feature_from_one_dim_data(
+    price_vector: pd.Series, feature_pools: list[Feature_Definition]
 ) -> tuple[np.ndarray, np.array]:
     """Create feature vectors from close price
 
     Args:
-        close_price (pd.DataFrame): OHLCV candles in pandas dataframe
+        price_vector (pd.Series): 1 dimension price vector
         feature_pools (list[Feature_Definition]): feature to aggregrate
 
     Returns:
@@ -46,7 +46,7 @@ def create_feature_from_close_price(
 
     """
 
-    close_price = ohlcv_candles["close"]
+    close_price = price_vector
 
     feature_set: list[np.ndarray] = []
     for f_def in feature_pools:

@@ -8,7 +8,7 @@ from crypto_feature_preprocess.port.interfaces import (
 )
 import numpy as np
 from crypto_feature_preprocess.port.features import (
-    create_feature_from_close_price,
+    create_feature_from_one_dim_data,
     _initialize_price_feature_instance,
 )
 import pytest
@@ -74,8 +74,8 @@ def test_feature_preparation(
     logger.debug(f"SMA cross feature size: {num_sma_cross_feature}")
     logger.debug(f"Expected feature size: {expected_feature_size}")
 
-    feature_array, feature_breakdown = create_feature_from_close_price(
-        ohlcv_candles=candles, feature_pools=spec_list
+    feature_array, feature_breakdown = create_feature_from_one_dim_data(
+        price_vector=candles["close"], feature_pools=spec_list
     )
     # Check feature array here
     num_features, dim = feature_array.shape

@@ -116,7 +116,7 @@ if __name__ == "__main__":
     min_candle_population: int = derive_min_candle_population_in_episode(
         candle_size_minutes=candle_size_minutes,
         data_length_days=data_length_days,
-        data_presence_ratio=0.8,
+        data_presence_ratio=0.9,
     )
 
     # Generate training and evaluation data
