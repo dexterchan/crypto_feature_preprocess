@@ -19,7 +19,7 @@ def get_test_ascending_mkt_data() -> pd.DataFrame:
         )
         df.set_index("timestamp", inplace=True, drop=True)
         df["close"] = df["inx"] * step + 1000
-
+        df["volume"] = df["inx"] * step + 1000
         df["price_movement"] = df["close"].diff()
         return df
         pass
@@ -41,7 +41,7 @@ def get_test_descending_mkt_data() -> pd.DataFrame:
         )
         df.set_index("timestamp", inplace=True, drop=True)
         df["close"] = (dim - df["inx"]) * step + 1000
-
+        df["volume"] = (dim - df["inx"]) * step + 1000
         df["price_movement"] = df["close"].diff()
         return df
         pass
@@ -72,6 +72,7 @@ def get_test_decending_then_ascending_mkt_data() -> pd.DataFrame:
         df.set_index("timestamp", inplace=True, drop=True)
         # Assign numpy array arr to df["close"]
         df["close"] = arr
+        df["volume"] = arr.copy()
         df["price_movement"] = df["close"].diff()
         return df
 

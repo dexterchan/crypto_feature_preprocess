@@ -1,3 +1,6 @@
+from __future__ import annotations
+from crypto_feature_preprocess.port.interfaces import Feature_Definition
+from dataclasses import dataclass
 from ..domains.features_gen import (
     Log_Price_Feature,
     RSI_Feature,
@@ -9,12 +12,11 @@ from .interfaces import (
     SMA_Cross_Feature_Interface,
     Log_Price_Feature_Interface,
     RSI_Feature_Interface,
-    Feature_Output,
 )
 
 import pandas as pd
 import numpy as np
-from typing import NamedTuple
+from typing import NamedTuple, Union
 from crypto_feature_preprocess.logging import get_logger
 
 logger = get_logger(__name__)
@@ -32,27 +34,70 @@ def _initialize_price_feature_instance(nt: NamedTuple, price: pd.Series) -> Feat
         raise NotImplementedError(f"Not supporting this config: {nt}")
 
 
-def trim_feature_to_same_length_and_group(
-    feature_list: list[np.ndarray], time_index: np.ndarray
+def _trim_feature_to_same_length_and_group(
+    feature_data_list: list[np.ndarray], time_index: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     """Trim all feature to the same length and group them together
 
     Args:
-        feature_list (list[np.ndarray]): list of feature
+        feature_data_list (list[np.ndarray]): list of feature
 
     Returns:
         tuple (np.ndarray, np.ndarray): feature with same length, time index
     """
     # Find the shortest feature length in feature_set
-    shortest_feature_length = min([len(f) for f in feature_list])
+    shortest_feature_length = min([len(f) for f in feature_data_list])
     # Trim all feature to the same length
-    feature_list = [
+    feature_data_list = [
         f[-shortest_feature_length:].reshape(shortest_feature_length, -1)
-        for f in feature_list
+        for f in feature_data_list
     ]
-    feature_set = np.concatenate(feature_list, axis=1)
+    new_feature_data_list = np.concatenate(feature_data_list, axis=1)
     new_time_index = time_index[-shortest_feature_length:]
-    return feature_set, new_time_index
+    return new_feature_data_list, new_time_index
+
+
+@dataclass
+class Feature_Output:
+    metadata: list[Union[Feature_Definition, list]]
+    time_index: np.ndarray
+    feature_data: np.ndarray  # [N X (accm of feature dimension)] matrix of features
+
+    @staticmethod
+    def merge_feature_output_list(
+        feature_output_list: list[Feature_Output],
+    ) -> Feature_Output:
+        """Merge list of feature output into one feature output
+            assumption: those feature output has the same time index
+            i.e. coming from data source with the same sampling frequency
+        Args:
+            feature_output_list (list[Feature_Output]): list of feature outpur
+        Returns:
+            Feature_Output: new Feature Output
+        """
+        # Merge list of feature output into one feature output
+        # 1) Merge metadata first
+        new_metadata = [f.metadata for f in feature_output_list]
+
+        # 2) Merge feature data
+        # base on the assumption that all feature output has the same time index
+        # find the longest time index from the pool
+        longest_time_index: pd.DatetimeIndex = pd.DatetimeIndex([])
+        for f in feature_output_list:
+            if len(f.time_index) > len(longest_time_index):
+                longest_time_index = f.time_index
+        # merge feature data
+        old_feature_data_lst: list[np.ndarray] = [
+            f.feature_data for f in feature_output_list
+        ]
+        new_feature_data, new_time_index = _trim_feature_to_same_length_and_group(
+            feature_data_list=old_feature_data_lst, time_index=longest_time_index
+        )
+        return Feature_Output(
+            metadata=new_metadata,
+            time_index=new_time_index,
+            feature_data=new_feature_data,
+        )
 
 
 def create_feature_from_one_dim_data_v2(
@@ -76,8 +121,8 @@ def create_feature_from_one_dim_data_v2(
         feature_array = feature.output_feature_array(normalize=True)
         feature_output_list.append(feature_array)
 
-    new_feature_data, new_time_index = trim_feature_to_same_length_and_group(
-        feature_list=feature_output_list, time_index=time_index
+    new_feature_data, new_time_index = _trim_feature_to_same_length_and_group(
+        feature_data_list=feature_output_list, time_index=time_index
     )
 
     return Feature_Output(

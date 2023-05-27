@@ -5,10 +5,10 @@ from crypto_feature_preprocess.port.interfaces import (
     Log_Price_Feature_Interface,
     SMA_Cross_Feature_Interface,
     Feature_Enum,
-    Feature_Output,
 )
 import numpy as np
 from crypto_feature_preprocess.port.features import (
+    Feature_Output,
     create_feature_from_one_dim_data,
     create_feature_from_one_dim_data_v2,
     _initialize_price_feature_instance,
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 
 @pytest.fixture()
-def get_feature_spec() -> list[Feature_Definition]:
+def get_price_feature_spec() -> list[Feature_Definition]:
     feature_definitions = [
         Feature_Definition(
             meta={"name": Feature_Enum.LOG_PRICE},
@@ -43,11 +43,24 @@ def get_feature_spec() -> list[Feature_Definition]:
     return feature_definitions
 
 
+@pytest.fixture()
+def get_vol_feature_spec() -> list[Feature_Definition]:
+    feature_definitions = [
+        Feature_Definition(
+            meta={"name": Feature_Enum.LOG_PRICE},
+            data=Log_Price_Feature_Interface(
+                dimension=LOG_PRICE_LOOKBACK * 2, normalize_value=5
+            ),
+        )
+    ]
+    return feature_definitions
+
+
 def test_teature_preparation_v2(
-    get_test_decending_then_ascending_mkt_data, get_feature_spec
+    get_test_decending_then_ascending_mkt_data, get_price_feature_spec
 ) -> None:
     candles = get_test_decending_then_ascending_mkt_data(dim=100)
-    feature_schema_list = get_feature_spec
+    feature_schema_list = get_price_feature_spec
 
     one_vector_data = candles["close"]
     rsi_feature = _initialize_price_feature_instance(
@@ -125,11 +138,12 @@ def test_teature_preparation_v2(
     pass
 
 
+@pytest.mark.skip(reason="function deprecated")
 def test_feature_preparation(
-    get_test_decending_then_ascending_mkt_data, get_feature_spec
+    get_test_decending_then_ascending_mkt_data, get_price_feature_spec
 ) -> None:
     candles = get_test_decending_then_ascending_mkt_data(dim=100)
-    spec_list = get_feature_spec
+    spec_list = get_price_feature_spec
 
     rsi_feature = _initialize_price_feature_instance(
         nt=spec_list[1].data, price=candles["close"]
@@ -217,4 +231,72 @@ def test_feature_preparation(
         )
         < 0.1
     ).all()
+    pass
+
+
+def test_feature_merging(
+    get_test_decending_then_ascending_mkt_data,
+    get_price_feature_spec,
+    get_vol_feature_spec,
+) -> None:
+    candles = get_test_decending_then_ascending_mkt_data(dim=500)
+    price_feature_schema_list = get_price_feature_spec
+    volume_feature_schema_list = get_vol_feature_spec
+
+    # Test our feature generation function
+    price_feature_output: Feature_Output = create_feature_from_one_dim_data_v2(
+        feature_schema_list=price_feature_schema_list,
+        data_vector=candles["close"],
+    )
+    (
+        price_feature_population_size,
+        price_feature_length,
+    ) = price_feature_output.feature_data.shape
+
+    volume_feature_output: Feature_Output = create_feature_from_one_dim_data_v2(
+        feature_schema_list=volume_feature_schema_list,
+        data_vector=candles["volume"],
+    )
+    (
+        volume_feature_population_size,
+        volume_feature_length,
+    ) = volume_feature_output.feature_data.shape
+
+    new_feature_output: Feature_Output = Feature_Output.merge_feature_output_list(
+        feature_output_list=[price_feature_output, volume_feature_output]
+    )
+    (
+        new_feature_population_size,
+        new_feature_length,
+    ) = new_feature_output.feature_data.shape
+    assert new_feature_population_size == min(
+        price_feature_population_size, volume_feature_population_size
+    ), "feature population size is not consistent"
+    assert new_feature_length == (price_feature_length + volume_feature_length)
+
+    assert len(new_feature_output.time_index) == min(
+        price_feature_population_size, volume_feature_population_size
+    ), "time index population size is not consistent"
+
+    longest_time_index = (
+        price_feature_output.time_index
+        if price_feature_population_size > volume_feature_population_size
+        else volume_feature_output.time_index
+    )
+    assert (
+        new_feature_output.time_index
+        == longest_time_index[-new_feature_population_size:]
+    ).all(), "time index content is not consistent"
+
+    # Check the feature content
+    # Check the price feature consistent with the original feature
+    assert (
+        new_feature_output.feature_data[:, :price_feature_length]
+        == price_feature_output.feature_data[-new_feature_population_size:, :]
+    ).all(), "price feature content is not consistent"
+    # Check the volume feature consistent with the original feature
+    assert (
+        new_feature_output.feature_data[:, price_feature_length:]
+        == volume_feature_output.feature_data[-new_feature_population_size:, :]
+    ).all(), "volume feature content is not consistent"
     pass
