@@ -225,8 +225,9 @@ class RSI_Feature(Feature):
         df_price: pd.Series,
         rsi_window: int,
         dimension: int,
-        normalize_value: float = 25,
+        normalize_value: float = 20,
         offset: float = 50,
+        is_clip: bool = True,
     ) -> None:
         """RSI feature
             rsi feature = (rsi - offset) / normalize_value
@@ -236,12 +237,14 @@ class RSI_Feature(Feature):
             dimension (int): dimension of the feature, i.e. look back period
             normalize_value (float, optional): normalize value. Defaults to 25.
             offset (float, optional): offset. Defaults to 50.
+            is_clip (bool, optional): clip value between (-1,1) when we run normalization. Defaults to True.
         """
         self.df_price = df_price
         self.rsi_window = rsi_window
         self.dimension = dimension
         self.normalized_value: float = normalize_value
         self.offset: float = offset
+        self.is_clip: bool = is_clip
 
     def _calculate(self) -> pd.Series:
         """calculate the RSI feature
@@ -273,6 +276,8 @@ class RSI_Feature(Feature):
             rsi_feature_array = (
                 rsi_feature_array - self.offset
             ) / self.normalized_value
+            if self.is_clip:
+                rsi_feature_array = np.clip(rsi_feature_array, a_min=-1, a_max=1)
 
         return rsi_feature_array
 

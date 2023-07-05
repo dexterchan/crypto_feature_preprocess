@@ -111,3 +111,7 @@ exec_cmd: export DATA_DIR=$(shell pwd)/../crypto_market_data/data
 exec_cmd:
 	python3 -m crypto_feature_preprocess --exchange kraken --symbol ETHUSD --input_data_dir=${DATA_DIR} --output_data_dir=/tmp/output \
 	--start_date 20200101  --time_windows 1095 --data_length 3 --data_step 1 --split_ratio 0.8 --candle_size 15
+
+run_jupyter: export PYTHONPATH=$(shell pwd):$PYTHONPATH
+run_jupyter:
+	cd notebooks && jupyter lab
