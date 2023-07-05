@@ -10,6 +10,15 @@ from ..logging import get_logger
 
 logger = get_logger(__name__)
 
+from zlib import crc32
+
+
+def _is_eval_data_by_hash(date_time: datetime, split_ratio: float) -> bool:
+    # Referencing from chapter 2 "Heads-on machine learning"
+    return (
+        crc32(np.int64(date_time.timestamp() * 1000000)) < (1 - split_ratio) * 2**32
+    )
+
 
 def splitting_training_and_eval_time_range(
     start_date: datetime,
@@ -38,18 +47,15 @@ def splitting_training_and_eval_time_range(
     logger.info(f"num_training_vector: {num_training_vector}")
 
     # Create data vector from start date to end date
-    data_collections = []
+    training_time_range = []
+    eval_time_range = []
     for i in range(num_of_data_vector):
         start_date_vector = start_date + i * data_step
         end_date_vector = start_date_vector + data_length
         data_vector = (start_date_vector, end_date_vector)
-        data_collections.append(data_vector)
+        if _is_eval_data_by_hash(start_date_vector, split_ratio):
+            eval_time_range.append(data_vector)
+        else:
+            training_time_range.append(data_vector)
 
-    # Splitting training and eval time range
-    # randomly pick num_training_vector from data_collections
-    shuffle(data_collections)
-    training_time_range = data_collections[:num_training_vector]
-
-    # eval time range is the rest of data_collections
-    eval_time_range = data_collections[num_training_vector:]
     return training_time_range, eval_time_range

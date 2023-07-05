@@ -26,8 +26,9 @@ def test_splitting_training_and_eval_time_range() -> None:
         split_ratio=split_ratio,
         data_step=timedelta(days=data_step),
     )
-    num_training_vector = int(num_of_data_vector * split_ratio)
-    assert len(training_time_range) == num_training_vector
+
+    num_training_vector = len(training_time_range)
+    assert abs((num_training_vector / num_of_data_vector) - split_ratio) < 0.1
     assert len(eval_time_range) == num_of_data_vector - num_training_vector
 
     pass
